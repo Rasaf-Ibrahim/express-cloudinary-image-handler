@@ -1,0 +1,53 @@
+{
+    "name": "express-cloudinary-image-handler",
+    "version": "0.1.0",
+    "description": "An Express package providing utilities and middleware for managing images on Cloudinary.",
+    "author": "Rasaf Ibrahim",
+    "license": "MIT",
+    "scripts": {
+        "build": "rollup -c",
+        "watch": "rollup -c -w",
+        "login": "npm adduser",
+        "publish": "npm publish"
+    },
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^25.0.1",
+        "@rollup/plugin-json": "^6.0.0",
+        "@rollup/plugin-node-resolve": "^15.1.0",
+        "@rollup/plugin-terser": "^0.4.3",
+        "@rollup/plugin-typescript": "^11.1.1",
+        "@types/node": "^20.6.2",
+        "cloudinary": "^1.37.3",
+        "express": "^4.18.2",
+        "express-fileupload": "^1.4.0",
+        "rollup": "^3.25.1",
+        "rollup-plugin-dts": "^5.3.0",
+        "rollup-plugin-peer-deps-external": "^2.2.4",
+        "tslib": "^2.5.3",
+        "typescript": "^5.1.3"
+    },
+    "peerDependencies": {
+        "express": "^4.18.2"
+    },
+    "type": "module",
+    "exports": {
+        ".": "./dist/index.js"
+    },
+    "typesVersions": {
+        "*": {
+            "*": [
+                "./dist/types/index.d.ts"
+            ]
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "keywords": [
+        "express",
+        "cloudinary",
+        "image",
+        "upload",
+        "delete"
+    ]
+}
