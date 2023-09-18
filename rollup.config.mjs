@@ -49,7 +49,11 @@ export default[
                 file: 'dist/index.cjs',
                 format: 'cjs',
             },
+            
         ],
+
+        // dependency, don't bundle
+        external: [ 'cloudinary', 'express-fileupload'], 
 
         context: 'global', // Setting the context to 'global' tells Rollup to treat "this" at the top level 
 

@@ -13,7 +13,7 @@ import { v2 as cloudinary } from 'cloudinary'
 ____________________________________________*/
 
 type PayloadType = {
-    publicIds: string[]
+    publicIds: string | string[]
 }
 
 
@@ -36,8 +36,13 @@ ____________________________________________*/
 export default async function deleteImagesFromCloudinary(payload: PayloadType): Promise<DeleteReportType> {
 
     // payload
-    const { publicIds } = payload
+    let { publicIds } = payload
 
+
+    // When deleting a single image, either a string or a 1-element array can be passed as 'publicIds'. If a string is passed, convert it into an array
+    if (!Array.isArray(publicIds)) {
+        publicIds = [publicIds]
+    }
 
     // Initializing the delete report which we will return from this function
     let deleteReport:DeleteReportType = {
@@ -90,7 +95,7 @@ export default async function deleteImagesFromCloudinary(payload: PayloadType): 
     }
 
     if (notFoundPublicIds.length > 0) {
-        error_message = `${error_message} But Couldn't find images in cloudinary with public_ids: ${notFoundPublicIds.join(', ')}. `
+        error_message = `${error_message}Couldn't find images in cloudinary with public_ids: ${notFoundPublicIds.join(', ')}. `
 
         deleteReport.errorInfo.statusCode = 404;
     }

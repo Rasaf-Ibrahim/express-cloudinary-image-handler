@@ -13,6 +13,23 @@ function imageUploadMiddleware(app: Express) {
     app.use(
         fileUpload({ useTempFiles: true })
     )
+
+
+    
+    /*  ⚠️ I tried the following code to have a custom name for the folder in which I am saving the temporary uploaded files but I couldn't see the files */
+
+    /* 
+        const __filename = fileURLToPath(import.meta.url)
+        const __dirname = path.dirname(__filename)
+        const tempDir = path.join(__dirname, 'temporary-upload')
+
+        app.use(
+            fileUpload({   
+                useTempFiles : true,
+                tempFileDir : tempDir 
+            })
+        )
+    */
 }
 
 

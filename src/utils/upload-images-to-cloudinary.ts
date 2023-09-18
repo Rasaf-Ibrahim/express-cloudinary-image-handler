@@ -27,13 +27,15 @@ type PayloadType = {
     req: Request,
 
     configuration: {
-        ReqBodyFieldName: string
+        formDataFieldName: string
 
         cloudinaryFolderName: string
 
-        acceptableExtensions: string[]
+        allowedExtensions: string[]
 
-        acceptableMaximumFileSize: number
+        maxFileSizeInKB: number
+
+        maxNumberOfUploads?: number
 
         deleteAllTempFiles?: boolean
     }
@@ -66,6 +68,7 @@ ____________________________________________*/
 export default async function uploadImagesToCloudinary(payload: PayloadType): Promise<UploadReportType> {
 
 
+
     // Payload
     const {
         req,
@@ -91,11 +94,11 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
     let failedToDeleteFilesPath: string[] = []
     let failedToUploadFilesCount = 0
 
-
+   
     try {
 
-        /* Image Upload Step-1: checking if any file is uploaded or not and uploading file with the right property name or not*/
-        // validation - no file is uploaded
+
+        /* Image Upload Step-1: checking if any file is uploaded or not */
         if (!req.files) {
 
             throw new extendedError('You have not uploaded any file', 404)
@@ -103,7 +106,8 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
 
 
         /* Image Upload Step-2: if we are in this step, that means at least a file is temporarily uploaded on the server. Getting the temporarily uploaded files */
-        let temporarilyUploadedFiles = req.files[configuration.ReqBodyFieldName]
+        let temporarilyUploadedFiles = req.files[configuration.formDataFieldName]
+
 
 
         /* Image Upload Step-3:  If 'temporarilyUploadedFiles' is not an array, turning it into an array. */
@@ -115,21 +119,28 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
         }
 
 
-        /* Image Upload Step-4: Checking if the frontend dev has used wrong property key while uploading  */
-        if (!req.files[configuration.ReqBodyFieldName]) {
+        /* Image Upload Step-4: Checking if the frontend dev has used wrong property key for every single file  */
+        if (!req.files[configuration.formDataFieldName]) {
 
-            throw new extendedError(`No file has correct field name. The field name has to be ${configuration.ReqBodyFieldName}`, 404)
+            throw new extendedError(`No file has correct field name. The field name has to be ${configuration.formDataFieldName}`, 404)
         }
 
 
-        /* Image Upload Step-5: The following loop will validate the images, upload the images to the cloudinary */
+        /* Image Upload Step-5: Checking if the user has tried to upload more files than he is allowed to  */
+        if (temporarilyUploadedFiles.length > configuration.maxNumberOfUploads) {
+
+            const image = configuration.maxNumberOfUploads === 1 ? 'image' : 'images'
+
+            throw new extendedError(`You can't upload more than ${configuration.maxNumberOfUploads} ${image}.`, 400)
+        }
+
+
+        /* Image Upload Step-6: The following loop will validate the images */
         for (const temporarilyUploadedFile of temporarilyUploadedFiles) {
 
 
-            /* Image Upload Step-5.1: validating the image with different conditions*/
-
             // Validation - image or not
-            if (!temporarilyUploadedFile.mimetype.startsWith('image')) { 
+            if (!temporarilyUploadedFile.mimetype.startsWith('image')) {
 
                 throw new extendedError('You are trying to upload a file which is not a image', 415)
             }
@@ -138,24 +149,24 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
             // Validation - image format
             const image_format = temporarilyUploadedFile.name.split(".").pop()
 
-            if (!configuration.acceptableExtensions.includes(image_format)) {
+            if (!configuration.allowedExtensions.includes(image_format)) {
 
-                throw new extendedError(`File must have one of the following extensions: ${configuration.acceptableExtensions.join(', ')}`, 415)
+                throw new extendedError(`File must have one of the following extensions: ${configuration.allowedExtensions.join(', ')}`, 415)
             }
 
 
             // validation - fileSize
             const fileSize = temporarilyUploadedFile.size / 1024
 
-            if (fileSize > configuration.acceptableMaximumFileSize) {
+            if (fileSize > configuration.maxFileSizeInKB) {
 
-                throw new extendedError(`File size must be lower than ${configuration.acceptableMaximumFileSize}kb`, 406)
+                throw new extendedError(`File size must be lower than ${configuration.maxFileSizeInKB}kb`, 406)
             }
 
         }
 
 
-        /* Image Upload Step-6: Create promises for every single image which we want to upload */
+        /* Image Upload Step-7: Create promises for every single image which we want to upload */
         const uploadPromises = temporarilyUploadedFiles.map(async (temporarilyUploadedFile) => {
 
             try {
@@ -203,7 +214,7 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
         })
 
 
-        /* Image Upload Step-7: Uploading all the images and checking for error */
+        /* Image Upload Step-8: Uploading all the images and checking for error */
         await Promise.allSettled(uploadPromises)
 
         // if any error has occurred while uploading any image
@@ -218,86 +229,99 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
         uploadReport.isError = true;
         uploadReport.errorInfo = {
             statusCode: error.statusCode,
-            message: error.message 
+            message: error.message
         }
     }
 
 
     finally {
 
-        // Function to delete files
+        // Helper Function to delete files
         const deleteFiles = async (filesToDelete) => {
             // Promisify the fs.unlink 
             const unlinkAsync = util.promisify(fs.unlink)
-            
 
             // Ensure filesToDelete is an array
             const files = Array.isArray(filesToDelete) ? filesToDelete : [filesToDelete]
-    
+
 
             // Create an array of promises for the file deletions
-            const deletionPromises = files.map(file => 
+            const deletionPromises = files.map(file =>
                 unlinkAsync(file.tempFilePath).catch(error => {
                     failedToDeleteFilesPath.push(file.tempFilePath)
                 })
             )
-    
+
 
             // Await all deletion promises to settle
             await Promise.allSettled(deletionPromises)
-    
+
 
             // Handle any failed deletions
             if (failedToDeleteFilesPath.length > 0) {
                 uploadReport.isError = true
                 uploadReport.errorInfo.statusCode = 500
-    
+
                 // Modify the original message to include failure details
                 uploadReport.errorInfo.message = `${uploadReport.errorInfo.message} Failed to delete temporarily uploaded files, their paths: ${failedToDeleteFilesPath.join(', ')}.`
             }
         }
 
 
+        // Helper function to keep only non-image files 
+        const nonImageFilesArray = (files) => {
+            return files.filter(file => !file.mimetype.startsWith('image/'));
+        }
+
+        // Helper function to collect all uploaded files into a single array
+        const allFilesArray = (reqFiles) => {
+            const allFiles = [];
+            for (const key in reqFiles) {
+                const files = reqFiles[key];
+                if (Array.isArray(files)) {
+                    allFiles.push(...files);
+                } else {
+                    allFiles.push(files);
+                }
+            }
+            return allFiles;
+        }
+
         // Function to delete files (files which has been uploaded temporarily by "express-fileUpload" package)
         const deleteTemporarilyUploadedFiles = async () => {
-          
+
             // Check if req.files exists
-            if (!req.files) return
-        
+            if (!req.files) return;
+
+            /* Design Choice:
+
+                - In the 'if' block, we delete all files, so no need to check for non-image files.
+
+                - In the 'else' block, we delete selectively based on a specific field name and then remove any remaining non-image files.
+            */
 
             // Delete all temporarily uploaded files, regardless of their type or the field name used for uploading
             if (deleteAllTempFiles) {
-
-                const fileKeys = Object.keys(req.files)
-
-                const allFiles = []
-        
-                // Iterate over all keys in the req.files object and collect all files into a single array
-                for (const key of fileKeys) {
-
-                    const fileArray = req.files[key] 
-
-                    if (Array.isArray(fileArray)) {
-                        allFiles.push(...fileArray)
-                    } 
-
-                    else {
-                        allFiles.push(fileArray)
-                    }
-                }
-        
-                // Pass the array containing all files to the deleteFiles function
-                await deleteFiles(allFiles)
-            } 
-
-            // Delete only the temporarily uploaded files which were uploaded with the right field name
-            else {
-                const fileArray = req.files[configuration.ReqBodyFieldName]
-                await deleteFiles(fileArray)
+                const allFiles = allFilesArray(req.files);
+                await deleteFiles(allFiles);
             }
 
+            // Delete the temporarily uploaded files which were uploaded with the right field name, also delete non image files
+            else {
+                const specificFiles = req.files[configuration.formDataFieldName];
+                await deleteFiles(specificFiles);
+
+                // Delete remaining non-image files
+                const allFiles = allFilesArray(req.files);
+                const nonImageFiles = nonImageFilesArray(allFiles)
+                if (nonImageFiles.length > 0) {
+                    await deleteFiles(nonImageFiles)
+                }
+            }
         }
-        
+
+
+
         await deleteTemporarilyUploadedFiles()
 
         return uploadReport
