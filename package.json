@@ -1,6 +1,6 @@
 {
     "name": "express-cloudinary-image-handler",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "An Express package providing utilities and middleware for managing images on Cloudinary.",
     "author": "Rasaf Ibrahim",
     "license": "MIT",
@@ -29,17 +29,9 @@
     "peerDependencies": {
         "express": "^4.18.2"
     },
-    "type": "module",
-    "exports": {
-        ".": "./dist/index.js"
-    },
-    "typesVersions": {
-        "*": {
-            "*": [
-                "./dist/types/index.d.ts"
-            ]
-        }
-    },
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/types/index.d.ts",
     "files": [
         "dist"
     ],
