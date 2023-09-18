@@ -1,0 +1,26 @@
+{
+    "name": "express-cloudinary-image-handler",
+    "description": "Documentation of express-cloudinary-image-handler",
+    "author": "Rasaf Ibrahim",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Rasaf-Ibrahim/express-cloudinary-image-handler"
+    },
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start"
+    },
+    "dependencies": {
+        "next": "^13.4.19",
+        "nextra": "latest",
+        "nextra-theme-docs": "latest",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "@types/node": "20.5.9",
+        "typescript": "^5.2.2"
+    }
+}
