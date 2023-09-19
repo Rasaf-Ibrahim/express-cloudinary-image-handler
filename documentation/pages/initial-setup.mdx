@@ -1,0 +1,49 @@
+---
+title: 'Import and Initial Setup'
+---
+
+{/* import */}
+import { Tab, Tabs } from 'nextra-theme-docs'
+import { Callout } from 'nextra/components'
+import {
+    PAGE_HEADING_BOTTOM,
+    HEADING_TOP_SPACER___COMPONENT,
+    HEADING_BOTTOM_SPACER___COMPONENT,
+    HALF_REM_SPACER___COMPONENT
+} from '../components/spacer.tsx'
+
+
+{/* Page Heading */}
+### Initial Setup
+<PAGE_HEADING_BOTTOM/>
+
+It is recommended to initialize the "cloudinaryConfig " & "imageUploadMiddleware" in the `index.js` or root file of your application. 
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+>index.js
+```js showLineNumbers copy
+// import express, dotenv and anything else that you need
+// import "cloudinaryConfig" & "imageUploadMiddleware" from 'express-cloudinary-image-handler'
+
+dotenv.config()
+const app = express()
+
+
+// Configure Cloudinary settings 
+cloudinaryConfig({
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET
+})
+
+// Initialize the imageUploadMiddleware with the express app instance 
+imageUploadMiddleware(app)
+```
+
+
+<Callout type="info" emoji="ℹ️">
+Make sure that you initialize the "imageUploadMiddleware" before defining the routes where you intend to upload images.
+</Callout>

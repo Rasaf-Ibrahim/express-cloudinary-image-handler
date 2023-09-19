@@ -1,0 +1,56 @@
+---
+title: 'Import and Initial Setup'
+---
+
+{/* import */}
+import { Tab, Tabs } from 'nextra-theme-docs'
+import { Callout } from 'nextra/components'
+import {
+    PAGE_HEADING_BOTTOM,
+    HEADING_TOP_SPACER___COMPONENT,
+    HEADING_BOTTOM_SPACER___COMPONENT,
+    HALF_REM_SPACER___COMPONENT
+} from '../components/spacer.tsx'
+
+
+
+
+{/* Page Heading */}
+### How to Import
+<PAGE_HEADING_BOTTOM/>
+
+
+<Tabs items={['CommonJS', 'ES Modules']}>
+
+
+  <Tab>
+
+   ```js copy
+        const {
+            cloudinaryConfig,
+            imageUploadMiddleware,
+            uploadImagesToCloudinary,
+            deleteImagesFromCloudinary
+        } = require('express-cloudinary-image-handler')
+   ```
+  </Tab>
+
+
+
+  <Tab>
+
+   ```js copy
+       import { 
+            cloudinaryConfig,
+            imageUploadMiddleware,
+            uploadImagesToCloudinary,
+            deleteImagesFromCloudinary 
+        } from 'express-cloudinary-image-handler'
+   ```
+
+  </Tab>
+
+
+</Tabs>
+
+

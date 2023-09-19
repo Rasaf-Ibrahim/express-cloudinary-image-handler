@@ -1,7 +1,9 @@
 {
     "index": "Introduction",
     "installation": "Installation",
-    "import-and-initial-setup": "Import and Initial Setup",
+    "cloudinary-credentials": "Cloudinary Credentials",
+    "how-to-import": "How to Import",
+    "initial-setup": "Initial Setup",
     "upload-image-to-cloudinary": "Upload Image to Cloudinary",
     "delete-image-from-cloudinary": "Delete Image from Cloudinary",
     "update-image-on-cloudinary": "Update Image on Cloudinary"
