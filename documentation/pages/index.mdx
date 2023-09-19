@@ -1,44 +1,57 @@
 ---
-title: 'Installation'
+title: 'Introduction'
 ---
 
 {/* import */}
 import { Tab, Tabs } from 'nextra-theme-docs'
 import {
     PAGE_HEADING_BOTTOM,
-    HEADING_TOP_SPACER___COMPONENT
+    HEADING_TOP_SPACER___COMPONENT,
+    HEADING_BOTTOM_SPACER___COMPONENT,
+    HALF_REM_SPACER___COMPONENT
 } from '../components/spacer.tsx'
 
 
 
 {/* Page Heading */}
-### Installation
+### Introduction
 <PAGE_HEADING_BOTTOM/>
 
 <HEADING_TOP_SPACER___COMPONENT/>
 
 
-Run the following command in your React project:
-
-<Tabs items={['npm', 'yarn']}>
-
-
-  <Tab>
-
-   ```shell copy
-       npm install express-cloudinary-image-handler
-   ```
-  </Tab>
+The `express-cloudinary-image-handler` package aims to simplify your image management tasks in Express.js applications that use Cloudinary. With just a few lines of code, you can upload and delete images from Cloudinary. The package includes a middleware to assist with image uploads and utility functions for both uploading and deleting images. While the focus is on ease of use, we've also paid attention to efficiency and error handling.
 
 
 
-  <Tab>
+<HEADING_TOP_SPACER___COMPONENT/>
 
-   ```shell copy
-       yarn add express-cloudinary-image-handler
-   ```
+#### Feature
 
-  </Tab>
+<HEADING_BOTTOM_SPACER___COMPONENT/>
 
 
-</Tabs>
+> `Single or Batch Operations` 
+>
+> - Supports the capability to upload either a single image or multiple images.
+> - Also allows for the deletion of either a single image or multiple images.
+
+<HALF_REM_SPACER___COMPONENT/>
+
+> `Concurrency`
+>
+> - Utilizes concurrency to speed up operations for multiple image uploads or deletions, reducing overall processing time.
+
+<HALF_REM_SPACER___COMPONENT/>
+
+> `Error Handling`
+>
+> - Both the image upload and delete utilities are designed to return informative error messages in case of any error.
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+> `Image Validation`
+>
+> - The image upload utility comes with configurable validation options to ensure the images meet specific criteria.
+
