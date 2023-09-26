@@ -35,7 +35,7 @@ const plugins_for_bundling = [
 
 
 
-export default[
+export default [
 
     // bundling - src/index.ts
     {
@@ -53,7 +53,7 @@ export default[
         ],
 
         // dependency, don't bundle
-        external: [ 'cloudinary', 'express-fileupload'], 
+        external: [ 'express-cloudinary-image-handler-dependencies'], 
 
         context: 'global', // Setting the context to 'global' tells Rollup to treat "this" at the top level 
 

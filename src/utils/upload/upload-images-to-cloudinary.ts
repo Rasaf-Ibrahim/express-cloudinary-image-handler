@@ -11,10 +11,12 @@ import util from 'util';
 import { Request } from "express"
 
 // library
-import { v2 as cloudinary } from 'cloudinary'
+import { cloudinary } from '../../dependencies/cloudinary.js'
 
 // utils
-import extendedError from './extended-error.js';
+import extendedError from '../extended-error.js';
+import handleCloudinaryConfigErrors from '../cloudinary-config-errors.js';
+
 
 
 /*__________________________________________
@@ -93,8 +95,9 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
     // Initializing variables which will collect info for generating a good error message 
     let failedToDeleteFilesPath: string[] = []
     let failedToUploadFilesCount = 0
+    let cloudinaryErrorMessage = ''
 
-   
+
     try {
 
 
@@ -208,6 +211,8 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
             }
 
             catch (error) {
+                cloudinaryErrorMessage = handleCloudinaryConfigErrors(error)
+
                 // updating the "failedToUploadFilesCount"
                 failedToUploadFilesCount = failedToUploadFilesCount + 1;
             }
@@ -220,13 +225,20 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
         // if any error has occurred while uploading any image
         if (failedToUploadFilesCount > 0) {
 
-            throw new extendedError(`Failed to upload ${failedToUploadFilesCount} images.`, 500)
+            let image = failedToUploadFilesCount === 1 ? 'image' : 'images'
+
+            let error_message = cloudinaryErrorMessage === '' ? `Failed to upload ${failedToUploadFilesCount} ${image}.` : `Failed to upload ${failedToUploadFilesCount} ${image}. ${cloudinaryErrorMessage}`
+
+
+            throw new extendedError(error_message, 500)
         }
     }
 
 
     catch (error) {
-        uploadReport.isError = true;
+
+        uploadReport.isError = true
+
         uploadReport.errorInfo = {
             statusCode: error.statusCode,
             message: error.message

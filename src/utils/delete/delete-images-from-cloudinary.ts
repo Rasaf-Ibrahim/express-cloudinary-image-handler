@@ -4,7 +4,8 @@
 ____________________________________________*/
 
 // library
-import { v2 as cloudinary } from 'cloudinary'
+import { cloudinary } from '../../dependencies/cloudinary.js'
+import handleCloudinaryConfigErrors from '../cloudinary-config-errors.js';
 
 
 /*__________________________________________
@@ -45,7 +46,7 @@ export default async function deleteImagesFromCloudinary(payload: PayloadType): 
     }
 
     // Initializing the delete report which we will return from this function
-    let deleteReport:DeleteReportType = {
+    let deleteReport: DeleteReportType = {
         isError: false,
         errorInfo: {
             statusCode: null,
@@ -58,6 +59,7 @@ export default async function deleteImagesFromCloudinary(payload: PayloadType): 
     let notFoundPublicIds: string[] = []
     let errorPublicIds: string[] = []
     let successPublicIds: string[] = []
+    let cloudinaryErrorMessage = ''
 
 
     // Create an array of promises for deleting images
@@ -65,17 +67,19 @@ export default async function deleteImagesFromCloudinary(payload: PayloadType): 
 
         try {
             const response = await cloudinary.uploader.destroy(public_id)
-            
+
             if (response.result === 'not found') {
                 notFoundPublicIds.push(public_id)
             }
-            
+
             else {
                 successPublicIds.push(public_id)
             }
         }
 
         catch (error) {
+            cloudinaryErrorMessage = handleCloudinaryConfigErrors(error)
+
             errorPublicIds.push(public_id)
         }
     })
@@ -89,30 +93,59 @@ export default async function deleteImagesFromCloudinary(payload: PayloadType): 
     let error_message: string = "";
 
 
-    // Accumulate error message using template literals
-    if (successPublicIds.length > 0) {
-        error_message = `Successfully deleted images with public_ids: ${successPublicIds.join(', ')}. `;
+    // if there is any cloudinary configuration error
+    if (cloudinaryErrorMessage !== '') {
+        error_message = cloudinaryErrorMessage
     }
 
-    if (notFoundPublicIds.length > 0) {
-        error_message = `${error_message}Couldn't find images in cloudinary with public_ids: ${notFoundPublicIds.join(', ')}. `
+    // if there isn't any cloudinary configuration error, but other errors
+    else {
 
-        deleteReport.errorInfo.statusCode = 404;
+        // Accumulate error message using template literals
+        if (successPublicIds.length > 0) {
+
+            const image = successPublicIds.length === 1 ? 'image' : 'images'
+
+            const public_id = successPublicIds.length === 1 ? 'public_id' : 'public_ids'
+
+            error_message = `Successfully deleted ${image} with ${public_id}: ${successPublicIds.join(', ')}. `;
+        }
+
+
+        if (notFoundPublicIds.length > 0) {
+
+            const image = notFoundPublicIds.length === 1 ? 'image' : 'images'
+
+            const public_id = notFoundPublicIds.length === 1 ? 'public_id' : 'public_ids'
+
+            error_message = `${error_message}Couldn't find ${image} in cloudinary with ${public_id}: ${notFoundPublicIds.join(', ')}. `
+
+            deleteReport.errorInfo.statusCode = 404;
+        }
+
+
+        if (errorPublicIds.length > 0) {
+
+            const image = errorPublicIds.length === 1 ? 'image' : 'images'
+
+            const public_id = errorPublicIds.length === 1 ? 'public_id' : 'public_ids'
+
+
+            error_message = `${error_message}Because of server error, couldn't delete ${image} with ${public_id}: ${errorPublicIds.join(', ')}. `
+
+            deleteReport.errorInfo.statusCode = 500
+        }
     }
 
-    if (errorPublicIds.length > 0) {
-        error_message = `${error_message}Because of server error, couldn't delete images with public_ids: ${errorPublicIds.join(', ')}. `
 
-        deleteReport.errorInfo.statusCode = 500;
-    }
-
-
-    // If there were any errors, update the deleteReport object
-    if (notFoundPublicIds.length > 0 || errorPublicIds.length > 0) {
-
+    // If there are any errors, update the deleteReport object
+    if (cloudinaryErrorMessage !== '' || notFoundPublicIds.length > 0 || errorPublicIds.length > 0) {
+        
         deleteReport.isError = true
         deleteReport.errorInfo.message = error_message
     }
+
+
 
     // Return the deleteReport 
     return deleteReport

@@ -1,5 +1,5 @@
-// Importing express-fileupload library 
-import fileUpload from 'express-fileupload'
+// fileUpload
+import { fileUpload } from '../dependencies/express-file-upload.js'
 
 // importing types
 import { Express } from 'express'

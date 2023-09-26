@@ -1,14 +1,11 @@
-// importing package
-import { v2 as cloudinary } from 'cloudinary'
-import { ConfigOptions } from 'cloudinary';
-
+// cloudinary
+import { cloudinary, ConfigOptions } from '../dependencies/cloudinary.js'
 
 type cloudinaryConfigType = {
     cloudName: string
     apiKey: string
     apiSecret: string
 }
-
 
 const cloudinaryConfig = (payload: cloudinaryConfigType): ConfigOptions | undefined => {
 
