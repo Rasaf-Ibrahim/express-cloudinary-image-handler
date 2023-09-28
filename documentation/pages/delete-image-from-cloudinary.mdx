@@ -1,0 +1,96 @@
+---
+title: 'Delete Image from Cloudinary'
+---
+
+{/* import */}
+import { Tab, Tabs } from 'nextra-theme-docs'
+import {
+    PAGE_HEADING_BOTTOM,
+    HEADING_TOP_SPACER___COMPONENT, 
+    HEADING_BOTTOM_SPACER___COMPONENT,
+    HALF_REM_SPACER___COMPONENT
+} from '../components/spacer.tsx'
+
+
+
+{/* Page Heading */}
+### Delete Image from Cloudinary
+<PAGE_HEADING_BOTTOM/>
+
+
+The `deleteImagesFromCloudinary` utility streamlines the process of deleting images from your Cloudinary  by simply passing their public IDs.
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+Let's first dive into an example. Afterward, we'll delve deeper into the syntax and configuration options of the `deleteImagesFromCloudinary` utility:
+
+
+```javascript showLineNumbers copy
+// import express and anything else that you need
+// import "deleteImagesFromCloudinary"  from 'express-cloudinary-image-handler'
+
+const app = express()
+
+app.get('/delete-images', async (req, res) => {
+
+    try {
+        const delete_report = await deleteImagesFromCloudinary({
+            publicIds: ['product/w7xrxsqbu9ial4katnud', 'product/w7xrxsqbual4katnud']
+        })
+
+        if (delete_report.isError) {
+            return res.json({
+                status_code: delete_report.errorInfo.statusCode,
+                message: delete_report.errorInfo.message
+            })
+        }
+
+        return res.json({
+            message: 'Deleted Images Successfully'
+        })
+    }
+
+    catch (error) {
+        return res.json({ message: "Something went wrong" });
+    }
+})
+
+```
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### deleteImagesFromCloudinary -  Parameters
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+
+| Parameter Name | Type  | Requirement | Description                                                     |
+| -------------- | ----- | ----------- | --------------------------------------------------------------- |
+| publicIds      | array | Required    | List of public IDs of the images to be deleted from Cloudinary. |
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### deleteImagesFromCloudinary -  Return Value
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+
+| Field Name | Type    | Description                                          |
+| ---------- | ------- | ---------------------------------------------------- |
+| isError    | boolean | Indicates if there was an error during the deletion. |
+| errorInfo  | object  | Contains error details if `isError` is true.         |
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+`errorInfo` Object Properties:
+
+| Property Name | Type   | Description                   |
+| ------------- | ------ | ----------------------------- |
+| statusCode    | number | The status code of the error. |
+| message       | string | The error message.            |
+
+
