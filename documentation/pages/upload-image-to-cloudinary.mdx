@@ -6,5 +6,255 @@ title: 'Upload Image to Cloudinary'
 import { Tab, Tabs } from 'nextra-theme-docs'
 import {
     PAGE_HEADING_BOTTOM,
-    HEADING_TOP_SPACER___COMPONENT
+    HEADING_TOP_SPACER___COMPONENT, 
+    HEADING_BOTTOM_SPACER___COMPONENT,
+    HALF_REM_SPACER___COMPONENT
 } from '../components/spacer.tsx'
+
+
+
+{/* Page Heading */}
+### Upload Image to Cloudinary
+<PAGE_HEADING_BOTTOM/>
+
+
+The `uploadImagesToCloudinary` utility simplifies the Cloudinary image upload process, offering range of configuration options and prompt error detection with clear messaging.
+
+<HALF_REM_SPACER___COMPONENT/>
+
+Let's first dive into an example. Afterward, we'll delve deeper into the syntax and configuration options of the `uploadImagesToCloudinary` utility:
+
+
+```javascript showLineNumbers copy
+// import express and anything else that you need
+// import "uploadImagesToCloudinary"  from 'express-cloudinary-image-handler'
+
+const app = express()
+
+app.post('/upload-images', async (req, res) => {
+
+    try {
+
+        const upload_report = await uploadImagesToCloudinary({
+            req: req,
+            configuration: {
+                formDataFieldName: 'productImages',
+                cloudinaryFolderName: 'product',
+                allowedExtensions: ['png', 'jpg', 'jpeg'],
+                maxFileSizeInKB: 512,
+                maxNumberOfUploads: 10,
+                deleteAllTempFiles: true
+            }
+        })
+
+        if (upload_report.isError) {
+            return res.json({
+                status_code: upload_report.errorInfo.statusCode,
+                message: upload_report.errorInfo.message
+            })
+        }
+
+        return res.json({
+            message: 'Uploaded Images Successfully',
+            info: {
+                uploaded_images_info: upload_report.imagesInfo
+            }
+        })
+    } 
+    
+    catch (error) {
+        return res.json({ message: "Something went wrong" });
+    }
+})
+```
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### uploadImagesToCloudinary -  Parameters
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+| Parameter Name | Type   | Requirement | Description                           |
+| -------------- | ------ | ----------- | ------------------------------------- |
+| req            | object | Required    | The Express request object.           |
+| configuration  | object | Required    | Configuration options for the upload. |
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+`configuration` Object Properties:
+
+| Property Name        | Type    | Requirement | Description                                                                                           |
+| -------------------- | ------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| formDataFieldName    | string  | Required    | The field name used in the frontend's FormData object for sending the image files to the backend. |
+| cloudinaryFolderName | string  | Required    | The folder name in Cloudinary where the image will be stored.                                         |
+| allowedExtensions    | array   | Required    | List of allowed file extensions for the image.                                                        |
+| maxFileSizeInKB      | number  | Required    | Maximum allowed file size for the image in kilobytes.                                                 |
+| maxNumberOfUploads   | number  | Optional    | Maximum number of images that can be uploaded at once.                                                |
+| deleteAllTempFiles   | boolean | Optional    | [Details](/upload-image-to-cloudinary#deletealltempfiles-property---details)                          |
+
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### uploadImagesToCloudinary - Return Value
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+
+| Field Name | Type    | Description                                        |
+| ---------- | ------- | -------------------------------------------------- |
+| isError    | boolean | Indicates if there was an error during the upload. |
+| errorInfo  | object  | Contains error details if `isError` is true.       |
+| imagesInfo | array   | Array containing information about each uploaded image.             |
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+`errorInfo` Object Properties:
+
+| Property Name | Type   | Description                   |
+| ------------- | ------ | ----------------------------- |
+| statusCode    | number | The status code of the error. |
+| message       | string | The error message.            |
+
+<HALF_REM_SPACER___COMPONENT/>
+
+`imagesInfo` is an array of objects, where each object represents details about an uploaded image. Properties of each object:
+
+| Property Name | Type   | Description                                                                                                                                                       |
+| ------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| imageSrc      | string | The direct URL or source of the uploaded image, which can be used to display or access the image.                                                                 |
+| imagePublicId | string | The unique identifier provided by Cloudinary for the image. This ID is essential for delete operation. |
+
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### uploadImagesToCloudinary -  Multiple Instances
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+
+
+In some scenarios, you may need to use the `uploadImagesToCloudinary` utility more than once within the same controller.
+
+To do this effectively, you should set the `deleteAllTempFiles` property to `false`. This ensures that image files uploaded under different field names are not deleted after the first instance completes its operation.
+
+Here's an example:
+
+
+```javascript showLineNumbers {19, 40} copy
+// import express and anything else that you need
+// import "uploadImagesToCloudinary"  from 'express-cloudinary-image-handler'
+
+const app = express()
+
+app.post('/upload-product-images', async (req, res) => {
+
+    try {
+
+        // First Instance: Upload Main Product Display Images
+        const featuredImagesUploadReport = await uploadImagesToCloudinary({
+            req: req,
+            configuration: {
+                formDataFieldName: 'featuredImages',
+                cloudinaryFolderName: 'product',
+                allowedExtensions: ['png', 'jpg', 'jpeg'],
+                maxFileSizeInKB: 512,
+                maxNumberOfUploads: 10,
+                deleteAllTempFiles: false  // Important
+            }
+        })
+
+        // Handle errors for the first instance
+        if (featuredImagesUploadReport.isError) {
+            return res.json({
+                status_code: featuredImagesUploadReport.errorInfo.statusCode,
+                message: featuredImagesUploadReport.errorInfo.message
+            })
+        }
+
+        // Second Instance: Upload Product Detail/Angle Images
+        const productImagesUploadReport = await uploadImagesToCloudinary({
+            req: req,
+            configuration: {
+                formDataFieldName: 'productImages',
+                cloudinaryFolderName: 'product',
+                allowedExtensions: ['png', 'jpg', 'jpeg'],
+                maxFileSizeInKB: 512,
+                maxNumberOfUploads: 10,
+                deleteAllTempFiles: true // Now it's safe to delete
+            }
+        })
+
+        // Handle errors for the second instance
+        if (productImagesUploadReport.isError) {
+            return res.json({
+                status_code: productImagesUploadReport.errorInfo.statusCode,
+                message: productImagesUploadReport.errorInfo.message
+            })
+        }
+
+        // Success Response
+        return res.json({
+            message: 'Uploaded Images Successfully',
+            info: {
+                featuredImages: featuredImagesUploadReport.imagesInfo,
+                productImages: productImagesUploadReport.imagesInfo
+            }
+        })
+    } 
+    
+    catch (error) {
+        return res.json({ message: "Something went wrong" })
+    }
+})
+```
+
+In this example, the first instance uploads main product display images with the field name `featuredImages` and the second instance uploads product detail or angle images with the field name `productImages`. The `deleteAllTempFiles` property is set to `false` in the first instance to retain the images for the second instance. In the second instance, it's set to `true` to clean up all temporary files after the operation is complete.
+
+
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### `deleteAllTempFiles` Property - Details
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+The `deleteAllTempFiles` is a property within the `configuration` parameter. It's optional, and its default value is set to `true`.
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+**What It Does**
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+This property controls the cleanup behavior for files temporarily stored in the server's "temp" folder during the upload process.
+
+- **When `true`**:
+  All files in the "temp" folder associated with the current upload operation, irrespective of their field names, are automatically deleted after the upload is complete. This ensures a clean temporary storage specific to the current operation, free from any residual files. 
+
+- **When `false`**: 
+  The utility will delete all image files that match the name set in `formDataFieldName` and any non-image files from the "temp" folder. However, it will retain image files that have different field names than the one specified in `formDataFieldName`.
+
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+**Use Cases**
+
+<HALF_REM_SPACER___COMPONENT/>
+
+- **Set to `true`**: 
+  Use this setting when you're uploading a batch of images in one go and want to ensure that the temporary storage is completely cleared afterward, leaving no leftover or unwanted files.
+
+- **Set to `false`**: 
+  Opt for this when you have multiple separate upload operations within the same controller. It ensures that files required for subsequent operations aren't mistakenly deleted by earlier tasks.
+
