@@ -50,8 +50,8 @@ Before diving into the code, let's assume you are using MongoDB and Mongoose and
   "_id": "60d72b292cf44c1291abcd12",
   "name": "John Doe",
   "username": "john_doe",
-  "profilePictureLink": "https://res.cloudinary.com/demo/image/upload/v1632764910/profile_pics/john_doe.jpg",
-  "profilePicturePublicId": "profile_pics/john_doe"
+  "profilePictureLink": "https://res.cloudinary.com/demo/image/upload/v1632764910/user-image/john_doe.jpg",
+  "profilePicturePublicId": "user-image/john_doe"
 }
 ```
 
@@ -88,8 +88,8 @@ app.put('/update-profile-picture', async (req, res) => {
     const upload_report = await uploadImagesToCloudinary({
       req: req,
       configuration: {
-        formDataFieldName: 'newProfilePicture',
-        cloudinaryFolderName: 'profile_pics',
+        formDataFieldName: 'profilePicture',
+        cloudinaryFolderName: 'user-image',
         allowedExtensions: ['png', 'jpg', 'jpeg'],
         maxFileSizeInKB: 512,
         maxNumberOfUploads: 1,
