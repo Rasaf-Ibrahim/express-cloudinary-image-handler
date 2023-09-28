@@ -6,7 +6,122 @@ title: 'Update Image on Cloudinary'
 import { Tab, Tabs } from 'nextra-theme-docs'
 import {
     PAGE_HEADING_BOTTOM,
-    HEADING_TOP_SPACER___COMPONENT
+    HEADING_TOP_SPACER___COMPONENT, 
+    HEADING_BOTTOM_SPACER___COMPONENT,
+    HALF_REM_SPACER___COMPONENT
 } from '../components/spacer.tsx'
 
 
+
+{/* Page Heading */}
+### Update Image on Cloudinary
+<PAGE_HEADING_BOTTOM/>
+
+
+While the package doesn't offer a direct utility for updating images on Cloudinary, you can achieve this by leveraging the existing utilities: `uploadImagesToCloudinary` and `deleteImagesFromCloudinary`. The process involves deleting the existing image and then uploading the new one.
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### Steps to Update an Image
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+1. **Delete the Existing Image**: 
+   - Utilize the [`deleteImagesFromCloudinary`](/delete-image-from-cloudinary) function to remove the image you intend to update. Make sure to provide the `publicId` of the image to ensure the correct image is deleted.
+
+2. **Upload the New Image**: 
+   - Once the old image is successfully deleted, employ the [`uploadImagesToCloudinary`](/upload-image-to-cloudinary) function to upload the new image. Although you can't reuse the same `publicId`, you can place the new image in the same Cloudinary folder to maintain organizational consistency.
+
+3. **Update Database Reference**: 
+   - After the new image is uploaded, its `publicId` will be different from the old one. It's crucial to update any references in your database to point to this new `publicId`. This can be retrieved from the `upload_report.imagesInfo` array.
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### Example
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+
+Before diving into the code, let's assume you are using MongoDB and Mongoose and you have a MongoDB User document structured as follows:
+
+```json
+{
+  "_id": "60d72b292cf44c1291abcd12",
+  "name": "John Doe",
+  "username": "john_doe",
+  "profilePictureLink": "https://res.cloudinary.com/demo/image/upload/v1632764910/profile_pics/john_doe.jpg",
+  "profilePicturePublicId": "profile_pics/john_doe"
+}
+```
+
+In the following example, we'll focus on updating the `profilePictureLink` and `profilePicturePublicId` fields:
+
+
+```javascript showLineNumbers copy
+// import express, mongoose & required modules and utilities
+// import "uploadImagesToCloudinary" and "deleteImagesFromCloudinary" from 'express-cloudinary-image-handler'
+
+const app = express();
+
+app.put('/update-profile-picture', async (req, res) => {
+
+  try {
+
+    // Fetch user from MongoDB
+    const userId = req.body.userId;
+
+    // Step 1: Delete the existing image from Cloudinary
+    const user = await mongoose.model('User').findById(userId);
+    const delete_report = await deleteImagesFromCloudinary({
+      publicIds: [user.profilePicturePublicId]
+    })
+
+    if (delete_report.isError) {
+      return res.json({
+        status_code: delete_report.errorInfo.statusCode,
+        message: delete_report.errorInfo.message
+      })
+    }
+
+    // Step 2: Upload the new image to Cloudinary
+    const upload_report = await uploadImagesToCloudinary({
+      req: req,
+      configuration: {
+        formDataFieldName: 'newProfilePicture',
+        cloudinaryFolderName: 'profile_pics',
+        allowedExtensions: ['png', 'jpg', 'jpeg'],
+        maxFileSizeInKB: 512,
+        maxNumberOfUploads: 1,
+        deleteAllTempFiles: true
+      }
+    })
+
+    if (upload_report.isError) {
+      return res.json({
+        status_code: upload_report.errorInfo.statusCode,
+        message: upload_report.errorInfo.message
+      })
+    }
+
+    // Step 3: Update MongoDB User document using findOneAndUpdate
+    const updatedUser = await mongoose.model('User').findOneAndUpdate(
+      { _id: userId },
+      {
+        profilePictureLink: upload_report.imagesInfo[0].imageSrc,
+        profilePicturePublicId: upload_report.imagesInfo[0].imagePublicId
+      },
+      { new: true }  // Return the updated document
+    )
+
+    return res.json({
+      message: 'Updated Profile Picture Successfully',
+      newProfilePictureLink: updatedUser.profilePictureLink
+    })
+  } 
+  
+  catch (error) {
+    return res.json({ message: "Something went wrong" });
+  }
+})
+```
