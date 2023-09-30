@@ -33,13 +33,15 @@ type PayloadType = {
 
         cloudinaryFolderName: string
 
-        allowedExtensions: string[]
+        allowedExtensions?: string[]
 
-        maxFileSizeInKB: number
+        maxFileSizeInKB?: number
 
         maxNumberOfUploads?: number
 
-        deleteAllTempFiles?: boolean
+        deleteAllTempFiles?: boolean,
+
+        useSourceFileName?: boolean
     }
 }
 
@@ -78,7 +80,8 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
     } = payload
 
     const {
-        deleteAllTempFiles = true
+        deleteAllTempFiles = true,
+        useSourceFileName = false
     } = configuration
 
 
@@ -122,6 +125,7 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
         }
 
 
+       
         /* Image Upload Step-4: Checking if the frontend dev has used wrong property key for every single file  */
         if (!req.files[configuration.formDataFieldName]) {
 
@@ -138,6 +142,8 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
         }
 
 
+        
+
         /* Image Upload Step-6: The following loop will validate the images */
         for (const temporarilyUploadedFile of temporarilyUploadedFiles) {
 
@@ -150,21 +156,33 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
 
 
             // Validation - image format
-            const image_format = temporarilyUploadedFile.name.split(".").pop()
+            if(configuration.allowedExtensions) {
 
-            if (!configuration.allowedExtensions.includes(image_format)) {
+                const image_format = temporarilyUploadedFile.name.split(".").pop()
 
-                throw new extendedError(`File must have one of the following extensions: ${configuration.allowedExtensions.join(', ')}`, 415)
+
+                // only if the image has format, checking the format is possible (sometime, by changing the name of the image file in the formData, the format can go missing)
+                if(image_format) {
+
+                    if (!configuration.allowedExtensions.includes(image_format)) {
+    
+                        throw new extendedError(`File must have one of the following extensions: ${configuration.allowedExtensions.join(', ')}`, 415)
+                    }
+                }
+    
             }
-
-
+         
+      
             // validation - fileSize
-            const fileSize = temporarilyUploadedFile.size / 1024
+            if(configuration.maxFileSizeInKB) {
 
-            if (fileSize > configuration.maxFileSizeInKB) {
+                const fileSize = temporarilyUploadedFile.size / 1024
 
-                throw new extendedError(`File size must be lower than ${configuration.maxFileSizeInKB}kb`, 406)
-            }
+                if (fileSize > configuration.maxFileSizeInKB) {
+
+                    throw new extendedError(`File size must be lower than ${configuration.maxFileSizeInKB}kb`, 406)
+                }
+            }  
 
         }
 
@@ -183,19 +201,70 @@ export default async function uploadImagesToCloudinary(payload: PayloadType): Pr
                     image_temp_path,
 
                     {
-                        /*🔖 on cloudinary, the image would get uploaded in a folder, specifying that folder.  */
+                        /* The 'folder' property:
+
+                            - Cloudinary allows you to organize your images into folders, much like a file system on a computer.
+                            - The 'folder' property specifies the name of the destination folder within Cloudinary where the image will be stored.
+                        */
                         folder: configuration.cloudinaryFolderName,
 
-                        /*🔖 when we upload the image temporarily with the 'express-fileUpload' library in the server, it gets uploaded to the 'temp' folder and also gets a new name automatically. We don't want that name in cloudinary. If we make the following property true, then the image name in cloudinary would be same to the temporary image file name. So, we are making it false.  */
+
+
+                        /* The 'use_filename' property:
+
+                            - When an image is uploaded using the 'express-fileUpload' middleware, it's temporarily saved to a specific directory on the server.
+
+                            - During this process, the middleware assigns a new, temporary name to the image.
+
+                            - However, when transferring this image to Cloudinary, we might not want to use this temporary name.
+                            
+                            - By setting 'use_filename' to false, we instruct Cloudinary to disregard this temporary name.
+                      */
                         use_filename: false,
 
-                        /*🔖 By default, the following property is true and if it's true, cloudinary adds some unique random text with the original image file name. 
-                        
-                        As we are not having the original name by setting 'use_filename:false', the random unique text generated from this property will be the image name. */
-                        unique_filename: true,
 
-                        /*🔖 As every new image will have a unique name, overwriting is not possible, so let's set overwrite: false*/
-                        overwrite: false,
+                        /* The 'public_id' property:
+
+                            - The 'public_id' property determines the name of the image file in Cloudinary.
+
+                            - With the 'public_id' property, we have the ability to manually specify the desired name.
+
+                            - When 'useSourceFileName' is set to true, we want the image in Cloudinary to retain its original name. Therefore, we set the 'public_id' to the original file's name.
+
+                            - If 'useSourceFileName' is false, we don't specify a 'public_id' and depend on 'unique_filename' property to handle the naming.
+
+                        */
+
+                        public_id: useSourceFileName? temporarilyUploadedFile.name : null,
+
+                        /* The 'unique_filename' property:
+
+                            - By default, this property's value is true and if it's true, cloudinary appends a unique random string to the end of the original image file name. This ensures that each uploaded image has a distinct name in Cloudinary.
+
+                            - The 'use_filename' property is set to false, meaning we're not relying on the temporary name given by the server.
+
+                            - The 'useSourceFileName' setting determines whether we want to use the original file's name or let Cloudinary generate a unique name for us.
+
+ 
+                            - If 'useSourceFileName' is true, we want to keep the original file name intact in Cloudinary. Therefore, we set 'unique_filename' to false to prevent Cloudinary from appending a random string.
+
+                            - When 'useSourceFileName' is false, the responsibility of naming the image in Cloudinary falls solely on the 'unique_filename' property. In this case, Cloudinary will generate a unique name by appending a random string to the original name, ensuring no naming conflicts.
+                        */
+
+                        unique_filename: useSourceFileName? false : true,
+
+
+                        /*The 'overwrite' property:
+
+                            - Sometimes, there might be scenarios where an image with the same name already exists in Cloudinary.
+
+                            - The 'overwrite' property decides how to handle such situations.
+
+                            - If 'useSourceFileName' is true, and an image with the same name already exists, setting 'overwrite' to true will replace the existing image with the new one.
+
+                            - If 'useSourceFileName' is false, since every image will have a unique name due to the 'unique_filename' setting, the 'overwrite' property won't have any effect.
+                        */
+                        overwrite: useSourceFileName? true: false,
                     }
                 )
 
