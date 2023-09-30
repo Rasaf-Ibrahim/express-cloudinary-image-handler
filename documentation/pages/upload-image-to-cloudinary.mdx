@@ -4,6 +4,7 @@ title: 'Upload Image to Cloudinary'
 
 {/* import */}
 import { Tab, Tabs } from 'nextra-theme-docs'
+import { Callout } from 'nextra/components'
 import {
     PAGE_HEADING_BOTTOM,
     HEADING_TOP_SPACER___COMPONENT, 
@@ -40,10 +41,10 @@ app.post('/upload-images', async (req, res) => {
             configuration: {
                 formDataFieldName: 'productImages',
                 cloudinaryFolderName: 'product',
-                allowedExtensions: ['png', 'jpg', 'jpeg'],
-                maxFileSizeInKB: 512,
-                maxNumberOfUploads: 10,
-                deleteAllTempFiles: true
+                allowedExtensions: ['png', 'jpg', 'jpeg'],  // Optional
+                maxFileSizeInKB: 512, // Optional
+                maxNumberOfUploads: 10, // Optional
+                deleteAllTempFiles: true // Optional
             }
         })
 
@@ -90,8 +91,8 @@ app.post('/upload-images', async (req, res) => {
 | -------------------- | ------- | ----------- | ----------------------------------------------------------------------------------------------------- |
 | formDataFieldName    | string  | Required    | The field name used in the frontend's FormData object for sending the image files to the backend. |
 | cloudinaryFolderName | string  | Required    | The folder name in Cloudinary where the image will be stored.                                         |
-| allowedExtensions    | array   | Required    | List of allowed file extensions for the image.                                                        |
-| maxFileSizeInKB      | number  | Required    | Maximum allowed file size for the image in kilobytes.                                                 |
+| allowedExtensions    | array   | Optional    | List of allowed file extensions for the image.                                                        |
+| maxFileSizeInKB      | number  | Optional    | Maximum allowed file size for the image in kilobytes.                                                 |
 | maxNumberOfUploads   | number  | Optional    | Maximum number of images that can be uploaded at once.                                                |
 | deleteAllTempFiles   | boolean | Optional    | [Details](/upload-image-to-cloudinary#deletealltempfiles-property---details)                          |
 
@@ -257,4 +258,75 @@ This property controls the cleanup behavior for files temporarily stored in the 
 
 - **Set to `false`**: 
   Opt for this when you have multiple separate upload operations within the same controller. It ensures that files required for subsequent operations aren't mistakenly deleted by earlier tasks.
+
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### Naming Images in Cloudinary: Use Original Source File Name or Manually Set the Name  
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+
+<Callout type="info">
+
+<HALF_REM_SPACER___COMPONENT/>
+
+**Is this seciton for you?**
+
+    - In prior sections, discussions regarding file naming were put aside, as image names in cloudinary were generated automatically.
+
+    - With image names produced through the automatic process, you find out the image's name only after its upload. 
+    
+    - However, if you need to determine the image's name before sending it to Cloudinary, this section is for you.
+</Callout>
+
+We've touched on the `uploadImagesToCloudinary` function, which requires a `configuration` parameter. This parameter is an object composed of several properties. All of these properties have been previously explained, except one: the `useSourceFileName` property.
+
+This property is optional, accepting a boolean value with a default of false.
+
+When set to `true`, the property allows the original source file name to be used as the Cloudinary image file's name. 
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+**Manually Set the Name**
+
+<HALF_REM_SPACER___COMPONENT/>
+
+While using `useSourceFileName`, we can also manually set Name. This can be achieved by manipulating the frontend's FormData. Specifically, by providing a third parameter to the FormData, you can set the desired name for the image.
+
+For instance:
+
+```javascript
+formData.append('image', 'image_file', 'desired_image_name');
+```
+
+In this example, `desired_image_name` will be the name assigned to the image when it's uploaded to Cloudinary.
+
+<HALF_REM_SPACER___COMPONENT/>
+
+**Ensuring Unique File Names**
+
+<HALF_REM_SPACER___COMPONENT/>
+
+One of the primary concerns of using the original file name is the potential risk of overwriting an existing image in Cloudinary. If a new image, bearing the same name as an existing one, is uploaded, the older image will be replaced. This can lead to unintentional replacements and potential data loss.
+
+To mitigate the risk of overwriting files in Cloudinary due to name collisions, it's advisable to ensure that each file name is unique. One effective way to achieve this is by leveraging packages like `nanoid` to generate a unique identifier for each file. By appending or prepending this unique ID to the original file name, the chances of having two files with the same name become extremely low.
+
+For example:
+
+```javascript
+import { nanoid } from 'nanoid';
+
+// Generate a unique ID
+const uniqueID = nanoid();
+
+// Append the unique ID to the original file name
+const uniqueFileName = `${uniqueID}_${image_info.img_file.name}`;
+
+formData.append('image', image_name, uniqueFileName);
+```
+
+By adopting this approach, you not only retain the advantage of pre-determining the image's name before uploading but also ensure that each image has a distinct name, safeguarding against unintentional overwrites.
 
