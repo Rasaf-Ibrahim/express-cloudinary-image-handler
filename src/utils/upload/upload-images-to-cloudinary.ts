@@ -4,11 +4,11 @@
 ____________________________________________*/
 
 // built-in node modules 
-import fs from 'fs';
-import util from 'util';
+import fs from 'fs'
+import util from 'util'
 
 // types
-import { Request } from "express"
+import { type_of_request_with_files } from '../../types/types.js'
 
 // library
 import { cloudinary } from '../../dependencies/cloudinary.js'
@@ -26,7 +26,7 @@ ____________________________________________*/
 
 type PayloadType = {
 
-    req: Request,
+    req: type_of_request_with_files,
 
     configuration: {
         formDataFieldName: string
