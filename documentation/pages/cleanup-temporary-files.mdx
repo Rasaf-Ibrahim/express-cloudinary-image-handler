@@ -1,0 +1,80 @@
+---
+title: 'Cleanup Temporary Files'
+---
+
+{/* import */}
+import { Tab, Tabs } from 'nextra-theme-docs'
+import { Callout } from 'nextra/components'
+import {
+    PAGE_HEADING_BOTTOM,
+    HEADING_TOP_SPACER___COMPONENT, 
+    HEADING_BOTTOM_SPACER___COMPONENT,
+    HALF_REM_SPACER___COMPONENT
+} from '../components/spacer.tsx'
+
+{/* Page Heading */}
+### Cleanup Temporary Files
+<PAGE_HEADING_BOTTOM/>
+
+The `cleanupTemporaryFiles` function is essential in handling a specific scenario in server management. When using `uploadImagesToCloudinary` for image uploads, it also cleans up any temporary files. However, there may be cases where your server logic returns a response before reaching the `uploadImagesToCloudinary` function, usually due to certain conditions not being met. In such situations, temporary files might still linger on the server. `cleanupTemporaryFiles` is designed for these instances, ensuring that any unwanted temporary files are removed, thus maintaining server efficiency and avoiding clutter.
+
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### Example
+
+Imagine a scenario where you're uploading a file but need to check certain conditions first. If these conditions aren't met, you'd typically send back an error response. Before sending this response, you use `cleanupTemporaryFiles` to remove any files that were temporarily uploaded during the request process. This ensures your server remains clean and efficient, even when the usual upload and cleanup process is interrupted.
+
+<HALF_REM_SPACER___COMPONENT/>
+
+```javascript showLineNumbers copy
+// import express and anything else that you need
+// import "cleanupTemporaryFiles" & "uploadImagesToCloudinary"  from 'express-cloudinary-image-handler'
+
+app.post('/upload-file', async (req, res) => {
+    // condition check before uploading
+    if (!isConditionMet(req)) {
+        // If condition is not met, cleanup temporary files
+        await cleanupTemporaryFiles({ req: req })
+        // Send a response indicating the failure of condition
+        return res.status(400).json({ message: 'Required condition not met' })
+    }
+
+    // If condition is met, the flow would normally proceed to 'uploadImagesToCloudinary' util
+    // ... code to upload image using 'uploadImagesToCloudinary'
+})
+```
+
+<HEADING_TOP_SPACER___COMPONENT/>
+
+#### cleanupTemporaryFiles - Parameters
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+| Parameter Name | Type                  | Requirement | Description                            |
+| -------------- | --------------------- | ----------- | -------------------------------------- |
+| req            | Express.js request object | Required    | The request object from Express.js containing file data. |
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+#### cleanupTemporaryFiles - Return Value
+
+<HEADING_BOTTOM_SPACER___COMPONENT/>
+
+
+| Field Name | Type    | Description                                          |
+| ---------- | ------- | ---------------------------------------------------- |
+| isError    | boolean | Indicates if there was an error during the deletion. |
+| errorInfo  | object  | Contains error details if `isError` is true.         |
+
+
+<HALF_REM_SPACER___COMPONENT/>
+
+
+`errorInfo` Object Properties:
+
+| Property Name | Type   | Description                   |
+| ------------- | ------ | ----------------------------- |
+| statusCode    | number | The status code of the error. |
+| message       | string | The error message.            |

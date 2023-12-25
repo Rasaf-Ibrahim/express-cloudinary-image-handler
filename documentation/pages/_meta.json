@@ -6,6 +6,7 @@
     "initial-setup": "Initial Setup",
     "upload-image-to-cloudinary": "Upload Image to Cloudinary",
     "delete-image-from-cloudinary": "Delete Image from Cloudinary",
-    "update-image-on-cloudinary": "Update Image on Cloudinary"
+    "update-image-on-cloudinary": "Update Image on Cloudinary",
+    "cleanup-temporary-files": "Cleanup Temporary Files"
 }
  
